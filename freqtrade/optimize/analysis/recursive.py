@@ -52,6 +52,7 @@ class RecursiveAnalysis(BaseAnalysis):
         logger.info("Start checking for recursive bias")
 
         # check and report signals
+        print(self.full_varHolder.indicators.keys(),)
         base_last_row = self.full_varHolder.indicators[pair_to_check].iloc[-1]
 
         for part in self.partial_varHolder_array:

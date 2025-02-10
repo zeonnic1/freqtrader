@@ -1,10 +1,10 @@
 FROM python:3.12.7-slim-bookworm as base
 
 # Setup env
-ENV LANG C.UTF-8
-ENV LC_ALL C.UTF-8
-ENV PYTHONDONTWRITEBYTECODE 1
-ENV PYTHONFAULTHANDLER 1
+ENV LANG=en_US.UTF-8
+ENV LC_ALL=en_US.UTF-8
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONFAULTHANDLER=1
 ENV PATH=/home/ftuser/.local/bin:$PATH
 ENV FT_APP_ENV="docker"
 
@@ -15,6 +15,7 @@ RUN mkdir /freqtrade \
   && apt-get clean \
   && useradd -u 1000 -G sudo -U -m -s /bin/bash ftuser \
   && chown ftuser:ftuser /freqtrade \
+  && echo "ftuser:ftuser"|chpasswd  \
   # Allow sudoers
   && echo "ftuser ALL=(ALL) NOPASSWD: /bin/chown" >> /etc/sudoers
 
@@ -23,7 +24,7 @@ WORKDIR /freqtrade
 # Install dependencies
 FROM base as python-deps
 RUN  apt-get update \
-  && apt-get -y install build-essential libssl-dev git libffi-dev libgfortran5 pkg-config cmake gcc \
+  && apt-get -y install build-essential libssl-dev git libffi-dev libgfortran5 pkg-config cmake gcc   \
   && apt-get clean \
   && pip install --upgrade pip wheel
 

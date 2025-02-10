@@ -1,4 +1,5 @@
 import logging
+import os
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -30,10 +31,9 @@ from freqtrade.strategy import IStrategy
 from freqtrade.strategy.strategy_wrapper import strategy_safe_wrapper
 from freqtrade.util import get_dry_run_wallet
 
-
 logger = logging.getLogger(__name__)
 
-
+logger.setLevel(logging.DEBUG)
 try:
     import plotly.graph_objects as go
     from plotly.offline import plot
@@ -116,10 +116,44 @@ def add_indicators(fig, row, indicators: dict[str, dict], data: pd.DataFrame) ->
         "scatter": go.Scatter,
         "bar": go.Bar,
     }
+
     for indicator, conf in indicators.items():
         logger.debug(f"indicator {indicator} with config {conf}")
         if indicator in data:
             kwargs = {"x": data["date"], "y": data[indicator].values, "name": indicator}
+            if indicator == "high_peak":
+
+                df_h = pd.read_csv(os.path.join(os.path.dirname(__file__),indicator))
+                peaks = go.Scatter(
+                    x=df_h["date"],
+                    y=df_h["high_peak"],
+                    mode="markers",
+                    name=indicator,
+                    marker=dict(
+                        symbol=f"triangle-down-dot",
+                        size=9,
+                        line=dict(width=1),
+                        color="red",
+                    ),
+                )
+                fig.add_trace(peaks)
+                continue
+            elif indicator == "low_peak":
+                df_l = pd.read_csv(os.path.join(os.path.dirname(__file__),indicator))
+                peaks = go.Scatter(
+                    x=df_l["date"],
+                    y=df_l["low_peak"],
+                    mode="markers",
+                    name=indicator,
+                    marker=dict(
+                        symbol=f"triangle-up-dot",
+                        size=9,
+                        line=dict(width=1),
+                        color="green",
+                    ),
+                )
+                fig.add_trace(peaks)
+                continue
 
             plot_type = conf.get("type", "scatter")
             color = conf.get("color")
@@ -129,17 +163,18 @@ def add_indicators(fig, row, indicators: dict[str, dict], data: pd.DataFrame) ->
                         "marker_color": color or "DarkSlateGrey",
                         "marker_line_color": color or "DarkSlateGrey",
                     }
+
                 )
+
             else:
                 if color:
                     kwargs.update({"line": {"color": color}})
-                kwargs["mode"] = "lines"
                 if plot_type != "scatter":
                     logger.warning(
                         f"Indicator {indicator} has unknown plot trace kind {plot_type}"
                         f', assuming "scatter".'
                     )
-
+            # kwargs.update(conf)
             kwargs.update(conf.get("plotly", {}))
             trace = plot_kinds[plot_type](**kwargs)
             fig.add_trace(trace, row, 1)
@@ -173,7 +208,7 @@ def add_profit(fig, row, data: pd.DataFrame, column: str, name: str) -> make_sub
 
 
 def add_max_drawdown(
-    fig, row, trades: pd.DataFrame, df_comb: pd.DataFrame, timeframe: str, starting_balance: float
+        fig, row, trades: pd.DataFrame, df_comb: pd.DataFrame, timeframe: str, starting_balance: float
 ) -> make_subplots:
     """
     Add scatter points indicating max drawdown
@@ -262,9 +297,9 @@ def plot_trades(fig, trades: pd.DataFrame) -> make_subplots:
         # Create description for exit summarizing the trade
         trades["desc"] = trades.apply(
             lambda row: f"{row['profit_ratio']:.2%}, "
-            + (f"{row['enter_tag']}, " if row["enter_tag"] is not None else "")
-            + f"{row['exit_reason']}, "
-            + f"{row['trade_duration']} min",
+                        + (f"{row['enter_tag']}, " if row["enter_tag"] is not None else "")
+                        + f"{row['exit_reason']}, "
+                        + f"{row['trade_duration']} min",
             axis=1,
         )
         trade_entries = go.Scatter(
@@ -301,7 +336,7 @@ def plot_trades(fig, trades: pd.DataFrame) -> make_subplots:
 
 
 def create_plotconfig(
-    indicators1: list[str], indicators2: list[str], plot_config: dict[str, dict]
+        indicators1: list[str], indicators2: list[str], plot_config: dict[str, dict]
 ) -> dict[str, dict]:
     """
     Combines indicators 1 and indicators 2 into plot_config if necessary
@@ -338,13 +373,13 @@ def create_plotconfig(
 
 
 def plot_area(
-    fig,
-    row: int,
-    data: pd.DataFrame,
-    indicator_a: str,
-    indicator_b: str,
-    label: str = "",
-    fill_color: str = "rgba(0,176,246,0.2)",
+        fig,
+        row: int,
+        data: pd.DataFrame,
+        indicator_a: str,
+        indicator_b: str,
+        label: str = "",
+        fill_color: str = "rgba(0,176,246,0.2)",
 ) -> make_subplots:
     """Creates a plot for the area between two traces and adds it to fig.
     :param fig: Plot figure to append to
@@ -430,13 +465,13 @@ def create_scatter(data, column_name, color, direction) -> go.Scatter | None:
 
 
 def generate_candlestick_graph(
-    pair: str,
-    data: pd.DataFrame,
-    trades: pd.DataFrame | None = None,
-    *,
-    indicators1: list[str] | None = None,
-    indicators2: list[str] | None = None,
-    plot_config: dict[str, dict] | None = None,
+        pair: str,
+        data: pd.DataFrame,
+        trades: pd.DataFrame | None = None,
+        *,
+        indicators1: list[str] | None = None,
+        indicators2: list[str] | None = None,
+        plot_config: dict[str, dict] | None = None,
 ) -> go.Figure:
     """
     Generate the graph from the data generated by Backtesting or from DB
@@ -520,12 +555,12 @@ def generate_candlestick_graph(
 
 
 def generate_profit_graph(
-    pairs: str,
-    data: dict[str, pd.DataFrame],
-    trades: pd.DataFrame,
-    timeframe: str,
-    stake_currency: str,
-    starting_balance: float,
+        pairs: str,
+        data: dict[str, pd.DataFrame],
+        trades: pd.DataFrame,
+        timeframe: str,
+        stake_currency: str,
+        starting_balance: float,
 ) -> go.Figure:
     # Combine close-values for all pairs, rename columns to "pair"
     try:
@@ -692,7 +727,7 @@ def plot_profit(config: Config) -> None:
     # Also, If only one open pair is left, then the profit-generation would fail.
     trades = trades[
         (trades["pair"].isin(plot_elements["pairs"])) & (~trades["close_date"].isnull())
-    ]
+        ]
     if len(trades) == 0:
         raise OperationalException(
             "No trades found, cannot generate Profit-plot without "

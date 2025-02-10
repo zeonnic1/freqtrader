@@ -157,9 +157,9 @@ function Find-PythonExecutable {
     "C:\Users\$env:USERNAME\AppData\Local\Programs\Python\Python312\python.exe",
     "C:\Users\$env:USERNAME\AppData\Local\Programs\Python\Python311\python.exe",
     "C:\Users\$env:USERNAME\AppData\Local\Programs\Python\Python310\python.exe",
-    "C:\Python312\python.exe",
-    "C:\Python311\python.exe",
-    "C:\Python310\python.exe"
+    "D:\Python312\python.exe",
+    "D:\Python311\python.exe",
+    "D:\Python310\python.exe"
   )
 
 
